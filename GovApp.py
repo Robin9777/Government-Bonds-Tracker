@@ -2,6 +2,7 @@ from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
 import pandas as pd
 import os
+from CallBacks import *
 
 app = Dash(__name__)
 
@@ -58,9 +59,31 @@ app.layout = html.Div(children=[
                 value="10Y", 
                 id="maturity-dropdown"
             ),
+
+            # Les deux premiers graphs côte à côte (time series + courbe)
             html.Div([
                 dcc.Graph(id="gov-graph", style={"width": "50%"}),
                 dcc.Graph(id="rate-curves", figure=rate_curve, style={"width": "50%"})
+            ], style={"display": "flex", "justify-content": "space-between"}),
+
+            # Les spreads (courbe et fly) côte à côte
+            html.Div([
+                html.Div([
+                    html.H3("Curve Spread"),
+                    html.Label("Select Maturities:"),
+                    dcc.Dropdown(options=maturities_, value="2Y", id="curve-spread-maturity1-dropdown"),
+                    dcc.Dropdown(options=maturities_, value="10Y", id="curve-spread-maturity2-dropdown"),
+                    dcc.Graph(id="curve-spread-graph", style={"height": "400px"})
+                ], style={"width": "50%"}),
+
+                html.Div([
+                    html.H3("Butterfly (Fly) Spread"),
+                    html.Label("Select Maturities:"),
+                    dcc.Dropdown(options=maturities_, value="2Y", id="fly-maturity1-dropdown"),
+                    dcc.Dropdown(options=maturities_, value="5Y", id="fly-maturity2-dropdown"),
+                    dcc.Dropdown(options=maturities_, value="10Y", id="fly-maturity3-dropdown"),
+                    dcc.Graph(id="fly-graph", style={"height": "400px"})
+                ], style={"width": "50%"})
             ], style={"display": "flex", "justify-content": "space-between"})
         ]),
 
@@ -88,58 +111,6 @@ app.layout = html.Div(children=[
 ])
 
 
-@callback(
-    Output("gov-graph", "figure"),
-    Input("debt-dropdown", "value"),
-    Input("maturity-dropdown", "value")
-)
-def update_graph(country, maturity):
-    file_path = os.path.join("GovDatas", f"{country}_{maturity}.parquet")
-    
-    if os.path.exists(file_path):
-        df = pd.read_parquet(file_path)
-
-        if "date" in df.columns:
-            df["date"] = pd.to_datetime(df["date"])
-        fig = px.line(df, x="date", y="close", 
-                      title=f"{country} {maturity} Government Bond")
-    else:
-        fig = px.line(title=f"No data for {country} {maturity}")
-    
-    return fig
-
-
-@callback(
-    Output("credit-graph", "figure"),
-    Input("credit1-dropdown", "value"),
-    Input("credit2-dropdown", "value"),
-    Input("maturity2-dropdown", "value")
-)
-def update_graph(country1, country2, maturity):
-
-    file_path_1 = os.path.join("GovDatas", f"{country1}_{maturity}.parquet")
-    file_path_2 = os.path.join("GovDatas", f"{country2}_{maturity}.parquet")
-
-    if os.path.exists(file_path_1) and os.path.exists(file_path_2):
-        df1 = pd.read_parquet(file_path_1)
-        df2 = pd.read_parquet(file_path_2)
-
-        if "date" in df1.columns and "date" in df2.columns:
-            df1["date"] = pd.to_datetime(df1["date"])
-            df2["date"] = pd.to_datetime(df2["date"])
-
-        df = pd.merge(df1[["date", "close"]], df2[["date", "close"]],
-                      on="date", suffixes=(f"_{country1}", f"_{country2}"))
-
-        df["spread"] = df[f"close_{country1}"] - df[f"close_{country2}"]
-
-        fig = px.line(df, x="date", y="spread",
-                      title=f"Credit Spread: {country1} - {country2} ({maturity})",
-                      labels={"spread": "Yield Spread (bps)"})
-    else:
-        fig = px.line(title=f"No data for {country1} or {country2} ({maturity})")
-
-    return fig
 
 # %%%%%%%%%%        Launch        %%%%%%%%%%%%
 if __name__ == "__main__":
