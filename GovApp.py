@@ -6,7 +6,7 @@ from CallBacks import *
 
 app = Dash(__name__)
 
-debts_ = ["US", "FR", "DE"]
+debts_ = ["US", "FR", "DE", "IT", "UK"]
 maturities_ = ["2Y", "5Y", "10Y", "30Y"]
 
 def get_rate_curve():
@@ -60,20 +60,35 @@ app.layout = html.Div(children=[
                 id="maturity-dropdown"
             ),
 
-            # Les deux premiers graphs côte à côte (time series + courbe)
+            # Outright + RateCurve
             html.Div([
-                dcc.Graph(id="gov-graph", style={"width": "50%"}),
-                dcc.Graph(id="rate-curves", figure=rate_curve, style={"width": "50%"})
-            ], style={"display": "flex", "justify-content": "space-between"}),
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id="gov-graph", style={"width": "70%", "height": "500px"}),
+                        html.Div(id="outright-metrics", className="metrics-panel")
+                    ], style={
+                        "display": "flex",
+                        "justify-content": "space-between",
+                        "align-items": "flex-start"
+                    })
+                ], style={"width": "50%"}),
 
-            # Les spreads (courbe et fly) côte à côte
+                html.Div([
+                    dcc.Graph(id="rate-curves", figure=rate_curve, style={"width": "100%", "height": "500px"})
+                ], style={"width": "50%"})
+            ], style={"display": "flex", "justify-content": "space-between"}),
+            
+            # Curve Spread + Fly
             html.Div([
                 html.Div([
                     html.H3("Curve Spread"),
                     html.Label("Select Maturities:"),
                     dcc.Dropdown(options=maturities_, value="2Y", id="curve-spread-maturity1-dropdown"),
                     dcc.Dropdown(options=maturities_, value="10Y", id="curve-spread-maturity2-dropdown"),
-                    dcc.Graph(id="curve-spread-graph", style={"height": "400px"})
+                    html.Div([
+                        dcc.Graph(id="curve-spread-graph", style={"width": "70%", "height": "400px"}),
+                        html.Div(id="curve-metrics", className="metrics-panel")
+                    ], style={"display": "flex", "justify-content": "space-between"})
                 ], style={"width": "50%"}),
 
                 html.Div([
@@ -82,7 +97,10 @@ app.layout = html.Div(children=[
                     dcc.Dropdown(options=maturities_, value="2Y", id="fly-maturity1-dropdown"),
                     dcc.Dropdown(options=maturities_, value="5Y", id="fly-maturity2-dropdown"),
                     dcc.Dropdown(options=maturities_, value="10Y", id="fly-maturity3-dropdown"),
-                    dcc.Graph(id="fly-graph", style={"height": "400px"})
+                    html.Div([
+                        dcc.Graph(id="fly-graph", style={"width": "70%", "height": "400px"}),
+                        html.Div(id="fly-metrics", className="metrics-panel")
+                    ], style={"display": "flex", "justify-content": "space-between"})
                 ], style={"width": "50%"})
             ], style={"display": "flex", "justify-content": "space-between"})
         ]),
@@ -105,7 +123,16 @@ app.layout = html.Div(children=[
                 value="10Y", 
                 id="maturity2-dropdown"
             ),
-            dcc.Graph(id="credit-graph")
+            html.Div([
+                html.Div([
+                    dcc.Graph(id="credit-graph", style={"width": "70%", "height": "500px"}),
+                    html.Div(id="credit-metrics", className="metrics-panel")
+                ], style={
+                    "display": "flex",
+                    "justify-content": "space-between",
+                    "align-items": "flex-start"
+                })
+            ])
         ])
     ])
 ])
