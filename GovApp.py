@@ -1,12 +1,13 @@
-from dash import Dash, html, dcc, callback, Output, Input
-import plotly.express as px
-import pandas as pd
+from dash import Dash, html, dcc, callback, Output, Input  # type: ignore
+import plotly.express as px  # type: ignore
+import pandas as pd  # type: ignore
 import os
 from CallBacks import *
+from datetime import datetime, timedelta
 
 app = Dash(__name__)
 
-debts_ = ["US", "FR", "DE", "IT", "UK"]
+debts_ = ["US", "FR", "DE", "IT", "UK", "ES"]
 maturities_ = ["2Y", "5Y", "10Y", "30Y"]
 
 def get_rate_curve():
@@ -46,6 +47,7 @@ app.layout = html.Div(children=[
 
     dcc.Tabs(children=[
 
+        # --- OutRight Tab ---
         dcc.Tab(label="Outright", children=[
             html.Label("Select Country:"),
             dcc.Dropdown(
@@ -105,6 +107,7 @@ app.layout = html.Div(children=[
             ], style={"display": "flex", "justify-content": "space-between"})
         ]),
 
+        # --- Credit Spread Tab ---
         dcc.Tab(label="Credit Spread", children=[
             html.Label("Select Country:"),
             dcc.Dropdown(
@@ -132,6 +135,22 @@ app.layout = html.Div(children=[
                     "justify-content": "space-between",
                     "align-items": "flex-start"
                 })
+            ])
+        ]),
+
+        # --- Variations ---
+        dcc.Tab(label="Variations", children=[
+            html.Div([
+                html.Label("select a date:"),
+                dcc.DatePickerRange(
+                    id='start-date-picker',
+                    start_date=datetime.today() - timedelta(days=1),
+                    end_date=datetime.today(),
+                    min_date_allowed=datetime.today() - timedelta(days=30),
+                    max_date_allowed=datetime.today(),
+                    display_format='YYYY-MM-DD'
+                ),
+                dcc.Graph(id="rate-curve-variations", style={"width": "80%", "height": "600px"})
             ])
         ])
     ])

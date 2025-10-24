@@ -1,7 +1,8 @@
-from dash import callback, Output, Input, html
+from dash import callback, Output, Input, html # type: ignore
 import os
-import pandas as pd
-import plotly.express as px
+import pandas as pd  # type: ignore
+import plotly.express as px  # type: ignore
+from datetime import datetime, timedelta
 
 
 @callback(
@@ -55,7 +56,6 @@ def outright_graph(country, maturity):
     })
 
     return fig, metrics_container
-
 
 
 @callback(
@@ -244,3 +244,43 @@ def fly_graph(debt: str, mat1: str, mat2: str, mat3: str):
         "gap": "4px",
         "paddingLeft": "20px"
     })
+
+
+debts_ = ["US", "FR", "DE", "IT", "UK", "ES"]
+maturities_ = ["2Y", "5Y", "10Y", "30Y"]
+
+# %%%%%%%%%%    Rate Curve Variation Callback   %%%%%%%%%%
+@callback(
+    Output("rate-curve-variations", "figure"),
+    Input("start-date-picker", "start_date"),
+    Input("start-date-picker", "end_date")
+)
+def rate_curve_var_graph(start_date: datetime, end_date: datetime):
+
+    df = pd.DataFrame(index=maturities_, columns=debts_)
+
+    for d in debts_:
+        for m in maturities_:
+            file_path = os.path.join("GovDatas", f"{d}_{m}.parquet")
+            if os.path.exists(file_path):
+                eod = pd.read_parquet(file_path)
+                eod.index = pd.to_datetime(eod["date"])
+                if not eod.empty:
+                    start_val = eod['close'].asof(pd.to_datetime(start_date))
+                    end_val   = eod['close'].asof(pd.to_datetime(end_date))
+                    df.loc[m, d] = start_val - end_val
+                else:
+                    df.loc[m, d] = None
+            else:
+                df.loc[m, d] = None
+
+    df = df.astype(float)
+
+    df_long = df.reset_index().melt(id_vars="index", var_name="Country", value_name="Rate")
+    df_long.rename(columns={"index": "Maturity"}, inplace=True)
+
+    fig = px.line(df_long, x="Maturity", y="Rate", color="Country",
+                  markers=True,
+                  title="Government Bond Rate Curves (Last Close)")
+    
+    return fig
