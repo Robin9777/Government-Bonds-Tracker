@@ -33,13 +33,14 @@ class GovBondRequest:
     
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-debts = [""] # to modify
+debts = ["DE", "US", "UK", "IT", "FR"] # to modify
 maturities = ["2Y", "5Y", "10Y", "30Y"] # 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i, d in enumerate(debts):
     for j, m in enumerate(maturities):
+        print(f"{m} - {d}")
         data = GovBondRequest(d, m).get_eod()
         file_path = os.path.join("GovDatas", f"{d}_{m}.parquet")
         data.to_parquet(file_path)

@@ -268,7 +268,7 @@ def rate_curve_var_graph(start_date: datetime, end_date: datetime):
                 if not eod.empty:
                     start_val = eod['close'].asof(pd.to_datetime(start_date))
                     end_val   = eod['close'].asof(pd.to_datetime(end_date))
-                    df.loc[m, d] = start_val - end_val
+                    df.loc[m, d] = end_val - start_val
                 else:
                     df.loc[m, d] = None
             else:
